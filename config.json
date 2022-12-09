@@ -1,0 +1,8 @@
+{
+    "srs_db" : "./srs_db.sqlite",
+    "tagaini_user_db" : "Tagaini Jisho/user.db",
+    "kanji_db" : "Tagaini Jisho/kanjidic2.db",
+    "vocab_db" : "Tagaini Jisho/jmdict.db",
+    "kanji_meaning_db" : "Tagaini Jisho/kanjidic2-en.db",
+    "vocab_meaning_db" : "Tagaini Jisho/jmdict-en.db"
+}
