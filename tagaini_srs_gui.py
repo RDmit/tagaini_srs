@@ -4,9 +4,9 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import font
 import tagaini_srs
+import tagaini_srs_histogram
 import random
 import locale
-import os
 
 def show_answer(item):
     readingLabel["text"] = item.reading
@@ -66,7 +66,7 @@ def end_review():
     review_frame.grid_remove()
 
 def open_histogram():
-    os.system("tagaini_srs_histogram.py")
+    tagaini_srs_histogram.main()
 
 def update_db_stats():
     stats = tagaini_srs.get_db_stats()

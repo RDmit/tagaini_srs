@@ -29,9 +29,8 @@ def get_bars_additive(cursor):
         query_result = cursor.execute(query.format(tagaini_srs.get_ticks(time))).fetchone()[0]
         bars.append(int(query_result))
     return bars
-        
 
-if __name__ == '__main__':
+def main():
     cursor = tagaini_srs.open_db()
     bars = get_bars(cursor)
     bar_width = size_x / bar_count
@@ -66,5 +65,7 @@ if __name__ == '__main__':
     for i in range(bar_count):
         canvas.create_rectangle(offset_x + i * bar_width, 10 + bar_max_height,
                                 offset_x + (i+1) * bar_width, 10 + bar_max_height - bars[i]*scaling, fill='red')
-    
     root.mainloop()
+
+if __name__ == '__main__':
+    main()
