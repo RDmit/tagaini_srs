@@ -181,7 +181,7 @@ def add_srs_vocab(cursor, vocab_id):
     print('add vocab', vocab[0])
     # Get meaning
     con = sqlite3.connect(vocab_meaning_db)
-    meaning = get_tagaini_meaning(con.cursor().execute(tagaini_vocab_meaning_query.format(vocab_id)).fetchone()[0]).replace('\n', ',').replace(',,', ',').replace('"','\'')
+    meaning = get_tagaini_meaning(con.cursor().execute(tagaini_vocab_meaning_query.format(vocab_id)).fetchone()[0])
     con.close()
     cursor.execute(insert_command.format(vocab_id, meaning, vocab[1], f'"{vocab[0]}"', 'NULL', get_next_review_time(0), get_ticks()))
     cursor.connection.commit()
@@ -221,7 +221,7 @@ def create_db():
 
 
 def get_tagaini_meaning(text):
-    return zlib.decompress(text[4:]).decode('utf-8')
+    return zlib.decompress(text[4:]).decode('utf-8').strip('\n').replace('\n', ',').replace(',,', ',').replace('"','\'')
 
 
 def grade_to_score(grade):
@@ -421,3 +421,4 @@ if __name__ == '__main__':
         colors_off()
     parse_cmd_line()
     main()
+
