@@ -148,11 +148,12 @@ select count(*) from srsentryset where CurrentGrade = 4 union all
 select count(*) from srsentryset where CurrentGrade = 5 union all
 select count(*) from srsentryset where CurrentGrade = 6 union all
 select count(*) from srsentryset where CurrentGrade = 7 union all
-select count(*) from srsentryset where CurrentGrade = 8
+select count(*) from srsentryset where CurrentGrade = 8 union all
+select count(*) from srsentryset where CurrentGrade = 9
 '''
 
 
-intervals = (4, 8, 24, 72, 168, 336, 720, 2880)
+intervals = (4, 8, 24, 72, 168, 336, 720, 2880, 8760)
 pause_before_exit = False
 no_color = False
 
@@ -178,6 +179,9 @@ def add_srs_vocab(cursor, vocab_id):
     if vocab == None:
         vocab = con.cursor().execute(tagaini_vocab_kana_only_query.format(vocab_id)).fetchone()
     con.close()
+    if vocab == None:
+        # The entry is not in tagaini db anymore
+        return
     print('add vocab', vocab[0])
     # Get meaning
     con = sqlite3.connect(vocab_meaning_db)
@@ -195,21 +199,27 @@ def import_from_tagaini(cursor):
             srs_vocab.add(row[0])
         else:
             srs_kanji.add(row[0])
-    con = sqlite3.connect(tagaini_user_db)
-    user_db_cursor = con.cursor()
-    for row in user_db_cursor.execute(tagaini_user_items_query):
-        if row[1] == 2 and row[0] not in srs_kanji:
-            add_srs_kanji(cursor, row[0])
-        elif row[1] == 1 and row[0] not in srs_vocab:
-            add_srs_vocab(cursor, row[0])
-    con.close()
+    try:
+        con = sqlite3.connect(tagaini_user_db)
+        user_db_cursor = con.cursor()
+        for row in user_db_cursor.execute(tagaini_user_items_query):
+            if row[1] == 2 and row[0] not in srs_kanji:
+                add_srs_kanji(cursor, row[0])
+            elif row[1] == 1 and row[0] not in srs_vocab:
+                add_srs_vocab(cursor, row[0])
+        con.close()
+    except:
+        print(f'Tagaini user db "{tagaini_user_db}" not found')
 
 
 def export_to_tagaini(item):
-    con = sqlite3.connect(tagaini_user_db)
-    con.cursor().execute(tagaini_user_item_update_command.format(item.external_id, grade_to_score(item.grade), item.failures + item.successes, item.successes))
-    con.commit()
-    con.close()
+    try:
+        con = sqlite3.connect(tagaini_user_db)
+        con.cursor().execute(tagaini_user_item_update_command.format(item.external_id, grade_to_score(item.grade), item.failures + item.successes, item.successes))
+        con.commit()
+        con.close()
+    except:
+        print(f'Tagaini user db "{tagaini_user_db}" not found')
 
 
 def create_db():
@@ -225,7 +235,7 @@ def get_tagaini_meaning(text):
 
 
 def grade_to_score(grade):
-    return (0, 10, 20, 30, 40, 55, 70, 85, 100)[grade]
+    return (0, 11, 22, 33, 44, 55, 66, 77, 88, 100)[grade]
 
 
 def get_ticks(time_from_now = 0):
@@ -238,7 +248,7 @@ def get_ticks(time_from_now = 0):
 
 
 def get_next_review_time(grade):
-    if grade == 8:
+    if grade == 9:
         return None
     return get_ticks(intervals[grade])
 
@@ -279,7 +289,7 @@ def get_time_till_review(cursor):
 
 def review_success(item):
     print(f'Grade {colors.GREEN}{item.grade} ↗ ', end='')
-    if item.grade < 8:
+    if item.grade < 9:
         item.grade += 1
     print(f'{item.grade}{colors.END}')
     item.successes += 1
@@ -356,7 +366,8 @@ def show_db_stats():
           colors.YELLOW, stats[5], stats[6],
           colors.BLUE, stats[7], stats[8],
           colors.CYAN, stats[9], stats[10],
-          colors.GREEN, stats[11], colors.END)
+          colors.GREEN, stats[11], stats[12],
+          colors.END)
 
 
 def show_worst_items():
