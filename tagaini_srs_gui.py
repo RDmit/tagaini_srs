@@ -7,15 +7,42 @@ import tagaini_srs
 import tagaini_srs_histogram
 import random
 import locale
+import requests
+import re
+import vlc
+import webbrowser
+
+def get_dictionary_url(item):
+    return f"https://jlearn.net/dictionary/{item.text}"
+
+def open_dictionary_url(item):
+    url = get_dictionary_url(item)
+    webbrowser.open(url)
+    
+def prepare_audio(item):
+    if item.is_kanji:
+        return None
+    url = get_dictionary_url(item)
+    html = requests.get(url).text
+    audio_id_match = re.search(r'<svg class="svg-icon aud" data-aud="([0-9A-Z]+)">', html)
+    audio_id = audio_id_match.group(1)
+    audio_url = f"https://jlearn.net/utility/play/{audio_id}"
+    return vlc.MediaPlayer(audio_url)
+
+def play_audio(player):
+    player.play()
 
 def show_answer(item):
     readingLabel["text"] = item.reading
     meaingLabel["text"] = item.meaning
+    dictionaryLabel["text"] = "Dictionary"
     answer_button.grid_remove()
     bad_button.grid()
     good_button.grid()
     root.bind('<KeyPress-1>', lambda x: review_bad(item))
     root.bind('<KeyPress-2>', lambda x: review_good(item))
+    if not item.is_kanji:
+        play_audio(player)
 
 def update_item(item):
     global review_counter
@@ -51,9 +78,12 @@ def new_review():
     text_label["foreground"] = '#05f' if item.is_kanji else '#80f'
     readingLabel["text"] = ""
     meaingLabel["text"] = ""
+    dictionaryLabel["text"] = ""
     bad_button.grid_remove()
     good_button.grid_remove()
     answer_button.grid()
+    global player
+    player = prepare_audio(item)
 
 def start_review():
     new_review()
@@ -147,6 +177,9 @@ if __name__ == '__main__':
     readingLabel.grid(column=0, row=4, columnspan=2)
     meaingLabel = ttk.Label(review_frame, text="", font=font.Font(size=15), wraplength=500, foreground='#f80')
     meaingLabel.grid(column=0, row=5, columnspan=2)
+    dictionaryLabel = ttk.Label(review_frame, text="", font=font.Font(size=10), wraplength=500, foreground='#000')
+    dictionaryLabel.grid(column=0, row=6, columnspan=2)
+    dictionaryLabel.bind("<Button-1>",lambda x: open_dictionary_url(item))
     bad_button = ttk.Button(review_frame, text="Bad (1)", command=lambda: review_bad(item))
     good_button = ttk.Button(review_frame, text="Good (2)", command=lambda: review_good(item))
     bad_button.grid(column=0, row=1)
